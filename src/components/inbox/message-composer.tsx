@@ -16,7 +16,6 @@ interface ReplyDraft {
 }
 
 interface MessageComposerProps {
-  conversationId: string;
   sessionExpired: boolean;
   onSend: (text: string, replyToId?: string) => void;
   onOpenTemplates: () => void;
@@ -25,7 +24,6 @@ interface MessageComposerProps {
 }
 
 export function MessageComposer({
-  conversationId,
   sessionExpired,
   onSend,
   onOpenTemplates,

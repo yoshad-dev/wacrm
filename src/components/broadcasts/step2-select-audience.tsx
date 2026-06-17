@@ -208,6 +208,8 @@ export function Step2SelectAudience({
   ]);
 
   useEffect(() => {
+    // Async count recomputation when audience filters change.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEstimatedCount();
   }, [fetchEstimatedCount]);
 

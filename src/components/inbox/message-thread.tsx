@@ -31,7 +31,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageBubble } from "./message-bubble";
 import { MessageActions } from "./message-actions";
 import { MessageComposer } from "./message-composer";
@@ -283,10 +282,7 @@ export function MessageThread({
   // refetches the rows without also tearing down and rebuilding the
   // realtime channel.
   useEffect(() => {
-    if (!conversationId) {
-      setReactions([]);
-      return;
-    }
+    if (!conversationId) return;
     const supabase = createClient();
     let cancelled = false;
 
@@ -384,6 +380,8 @@ export function MessageThread({
   // Clear any in-progress reply draft when the active conversation changes —
   // a quote pulled from conversation A shouldn't bleed into conversation B.
   useEffect(() => {
+    // Clear the in-progress reply draft when the active conversation changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReplyTo(null);
   }, [conversationId]);
 
@@ -666,7 +664,7 @@ export function MessageThread({
         setReactions(snapshot);
       }
     },
-    [conversation, user?.id],
+    [conversation, user],
   );
 
   const handleAssignChange = useCallback(
@@ -939,7 +937,6 @@ export function MessageThread({
 
       {/* Composer */}
       <MessageComposer
-        conversationId={conversation.id}
         sessionExpired={sessionInfo.expired}
         onSend={handleSend}
         onOpenTemplates={handleOpenTemplates}

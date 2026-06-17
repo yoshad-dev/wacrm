@@ -162,11 +162,13 @@ export function WhatsAppConfig() {
     // for the first render window and bail without ever retrying
     // once the profile arrives.
     if (authLoading || profileLoading) return;
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (!user || !accountId) {
       setLoading(false);
       return;
     }
     fetchConfig(accountId);
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [authLoading, profileLoading, user, accountId, fetchConfig]);
 
   async function handleSave() {

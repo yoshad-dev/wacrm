@@ -51,8 +51,10 @@ export function ProfileForm() {
   // Seed form state once the profile loads.
   useEffect(() => {
     if (!profile) return;
+    /* eslint-disable react-hooks/set-state-in-effect */
     setFullName(profile.full_name ?? '');
     setEmail(profile.email ?? '');
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [profile]);
 
   // Cleanup object URLs to avoid leaks.

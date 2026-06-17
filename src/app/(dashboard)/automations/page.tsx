@@ -80,6 +80,8 @@ export default function AutomationsPage() {
   }
 
   useEffect(() => {
+    // Initial data fetch; the setState calls live inside the async loader.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load()
   }, [])
 

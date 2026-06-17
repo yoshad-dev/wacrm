@@ -156,21 +156,25 @@ export function TemplateManager() {
   // Resize body_samples so it always has exactly bodyVarCount entries.
   // (We mutate via setForm in an effect so React owns the state.)
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect */
     setForm((prev) => {
       if (prev.body_samples.length === bodyVarCount) return prev;
       const next = prev.body_samples.slice(0, bodyVarCount);
       while (next.length < bodyVarCount) next.push('');
       return { ...prev, body_samples: next };
     });
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [bodyVarCount]);
 
   useEffect(() => {
     if (authLoading) return;
+    /* eslint-disable react-hooks/set-state-in-effect */
     if (!user) {
       setLoading(false);
       return;
     }
     fetchTemplates(user.id);
+    /* eslint-enable react-hooks/set-state-in-effect */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user?.id]);
 
