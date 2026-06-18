@@ -81,6 +81,26 @@ describe("deriveCanvasEdges — single-outgoing node types", () => {
     expect(edges).toEqual([]);
   });
 
+  it("skips edges that target a start node (start has no incoming handle)", () => {
+    const edges = deriveCanvasEdges(
+      nodes(
+        {
+          node_key: "a",
+          node_type: "send_message",
+          config: { text: "hi", next_node_key: "s" },
+        },
+        { node_key: "s", node_type: "start", config: { next_node_key: "b" } },
+        { node_key: "b", node_type: "end", config: {} },
+      ),
+    );
+    expect(edges).toHaveLength(1);
+    expect(edges[0]).toMatchObject({
+      source: "s",
+      target: "b",
+      sourceHandle: "next",
+    });
+  });
+
   it("skips empty next_node_key (fresh node)", () => {
     const edges = deriveCanvasEdges(
       nodes({

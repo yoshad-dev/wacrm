@@ -39,6 +39,11 @@ export interface CanvasEdge {
 
 export function deriveCanvasEdges(nodes: BuilderNode[]): CanvasEdge[] {
   const knownKeys = new Set(nodes.map((n) => n.node_key));
+  const startKeys = new Set(
+    nodes.filter((n) => n.node_type === "start").map((n) => n.node_key),
+  );
+  const isValidTarget = (key: string): boolean =>
+    knownKeys.has(key) && !startKeys.has(key);
   const edges: CanvasEdge[] = [];
 
   for (const node of nodes) {
@@ -50,7 +55,7 @@ export function deriveCanvasEdges(nodes: BuilderNode[]): CanvasEdge[] {
       case "collect_input":
       case "set_tag": {
         const next = (cfg as { next_node_key?: string }).next_node_key;
-        if (next && knownKeys.has(next)) {
+        if (next && isValidTarget(next)) {
           edges.push({
             id: `${node.node_key}--next--${next}`,
             source: node.node_key,
@@ -64,7 +69,7 @@ export function deriveCanvasEdges(nodes: BuilderNode[]): CanvasEdge[] {
       case "condition": {
         const trueNext = (cfg as { true_next?: string }).true_next;
         const falseNext = (cfg as { false_next?: string }).false_next;
-        if (trueNext && knownKeys.has(trueNext)) {
+        if (trueNext && isValidTarget(trueNext)) {
           edges.push({
             id: `${node.node_key}--true--${trueNext}`,
             source: node.node_key,
@@ -73,7 +78,7 @@ export function deriveCanvasEdges(nodes: BuilderNode[]): CanvasEdge[] {
             label: "true",
           });
         }
-        if (falseNext && knownKeys.has(falseNext)) {
+        if (falseNext && isValidTarget(falseNext)) {
           edges.push({
             id: `${node.node_key}--false--${falseNext}`,
             source: node.node_key,
@@ -97,7 +102,7 @@ export function deriveCanvasEdges(nodes: BuilderNode[]): CanvasEdge[] {
           const next =
             typeof btn.next_node_key === "string" ? btn.next_node_key : null;
           const title = typeof btn.title === "string" ? btn.title : null;
-          if (!replyId || !next || !knownKeys.has(next)) continue;
+          if (!replyId || !next || !isValidTarget(next)) continue;
           edges.push({
             id: `${node.node_key}--button:${replyId}--${next}`,
             source: node.node_key,
@@ -125,7 +130,7 @@ export function deriveCanvasEdges(nodes: BuilderNode[]): CanvasEdge[] {
             const next =
               typeof row.next_node_key === "string" ? row.next_node_key : null;
             const title = typeof row.title === "string" ? row.title : null;
-            if (!replyId || !next || !knownKeys.has(next)) continue;
+            if (!replyId || !next || !isValidTarget(next)) continue;
             edges.push({
               id: `${node.node_key}--row:${replyId}--${next}`,
               source: node.node_key,
