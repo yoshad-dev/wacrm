@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useCan } from '@/hooks/use-can';
+import { useI18n } from '@/i18n/use-i18n';
+import { LanguageSwitcher } from '@/components/language-switcher';
 import { WhatsAppConfig } from '@/components/settings/whatsapp-config';
 import { TemplateManager } from '@/components/settings/template-manager';
 import { TagManager } from '@/components/settings/tag-manager';
@@ -48,6 +50,7 @@ export default function SettingsPage() {
   // admin+ only — mirror the gate on the Contacts page. The `custom_fields`
   // RLS rejects non-admin writes regardless.
   const canEditSettings = useCan('edit-settings');
+  const { t } = useI18n();
 
   // The URL is the single source of truth for the active tab — no
   // local state, no sync effect. A previous revision duplicated this
@@ -68,12 +71,16 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Manage your profile, WhatsApp® integration, message templates, and
-          tags.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">
+            {t("settings.title")}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {t("settings.subtitle")}
+          </p>
+        </div>
+        <LanguageSwitcher />
       </div>
 
       <Tabs value={tab} onValueChange={(v) => onChange(v as TabValue)}>
@@ -83,28 +90,28 @@ export default function SettingsPage() {
             className="data-active:text-primary text-muted-foreground data-active:bg-muted"
           >
             <User className="size-4" />
-            Profile
+            {t("settings.profile")}
           </TabsTrigger>
           <TabsTrigger
             value="whatsapp"
             className="data-active:text-primary text-muted-foreground data-active:bg-muted"
           >
             <Settings className="size-4" />
-            WhatsApp Config
+            {t("settings.whatsappConfig")}
           </TabsTrigger>
           <TabsTrigger
             value="templates"
             className="data-active:text-primary text-muted-foreground data-active:bg-muted"
           >
             <MessageSquare className="size-4" />
-            Templates
+            {t("settings.templates")}
           </TabsTrigger>
           <TabsTrigger
             value="tags"
             className="data-active:text-primary text-muted-foreground data-active:bg-muted"
           >
             <Tag className="size-4" />
-            Tags
+            {t("settings.tags")}
           </TabsTrigger>
           {canEditSettings && (
             <TabsTrigger
@@ -112,7 +119,7 @@ export default function SettingsPage() {
               className="data-active:text-primary text-muted-foreground data-active:bg-muted"
             >
               <SlidersHorizontal className="size-4" />
-              Custom Fields
+              {t("settings.customFields")}
             </TabsTrigger>
           )}
           <TabsTrigger
@@ -120,21 +127,21 @@ export default function SettingsPage() {
             className="data-active:text-primary text-muted-foreground data-active:bg-muted"
           >
             <Coins className="size-4" />
-            Deals
+            {t("settings.deals")}
           </TabsTrigger>
           <TabsTrigger
             value="appearance"
             className="data-active:text-primary text-muted-foreground data-active:bg-muted"
           >
             <Palette className="size-4" />
-            Appearance
+            {t("settings.appearance")}
           </TabsTrigger>
           <TabsTrigger
             value="members"
             className="data-active:text-primary text-muted-foreground data-active:bg-muted"
           >
             <UsersRound className="size-4" />
-            Members
+            {t("settings.members")}
           </TabsTrigger>
         </TabsList>
 
