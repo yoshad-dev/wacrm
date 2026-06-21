@@ -42,6 +42,8 @@ export const CURRENCIES: CurrencyOption[] = [
   { code: "NGN", label: "Nigerian Naira", symbol: "₦" },
   { code: "SGD", label: "Singapore Dollar", symbol: "S$" },
   { code: "MXN", label: "Mexican Peso", symbol: "$" },
+  { code: "XAF", label: "Central African CFA franc", symbol: "FCFA" },
+  { code: "XOF", label: "West African CFA franc", symbol: "FCFA" },
 ];
 
 /**
