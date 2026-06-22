@@ -80,6 +80,8 @@ export default function AutomationsPage() {
   }
 
   useEffect(() => {
+    // Data fetch on mount; setState happens inside async resolution.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load()
   }, [])
 
