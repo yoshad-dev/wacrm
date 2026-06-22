@@ -208,6 +208,8 @@ export function Step2SelectAudience({
   ]);
 
   useEffect(() => {
+    // Data fetch when audience criteria change; setState happens inside async resolution.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEstimatedCount();
   }, [fetchEstimatedCount]);
 

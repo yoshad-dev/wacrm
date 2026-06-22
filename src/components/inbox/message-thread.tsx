@@ -305,6 +305,8 @@ export function MessageThread({
   // realtime channel.
   useEffect(() => {
     if (!conversationId) {
+      // Clear reactions when no conversation is selected.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setReactions([]);
       return;
     }
@@ -405,6 +407,8 @@ export function MessageThread({
   // Clear any in-progress reply draft when the active conversation changes —
   // a quote pulled from conversation A shouldn't bleed into conversation B.
   useEffect(() => {
+    // Clear reply draft when the active conversation changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReplyTo(null);
   }, [conversationId]);
 
@@ -753,7 +757,7 @@ export function MessageThread({
         setReactions(snapshot);
       }
     },
-    [conversation, user?.id],
+    [conversation, user],
   );
 
   const handleAssignChange = useCallback(

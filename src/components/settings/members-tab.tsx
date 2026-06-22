@@ -175,6 +175,8 @@ export function MembersTab() {
   }, [canManageMembers]);
 
   useEffect(() => {
+    // Data fetch on mount / permission change; setState happens inside async resolution.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadEverything();
   }, [loadEverything]);
 

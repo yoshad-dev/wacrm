@@ -43,6 +43,8 @@ export function DealsSettings() {
   // Keep the select in sync once the profile (and its account default)
   // resolves, and after a save round-trips through refreshProfile.
   useEffect(() => {
+    // Sync derived default currency with local selection state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelected(defaultCurrency);
   }, [defaultCurrency]);
 

@@ -46,7 +46,10 @@ export function ProfileForm() {
   // Seed form state once the profile loads.
   useEffect(() => {
     if (!profile) return;
+    // Form reset when profile data arrives; mirrors a keyed remount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFullName(profile.full_name ?? '');
+     
     setEmail(profile.email ?? '');
   }, [profile]);
 

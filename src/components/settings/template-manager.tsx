@@ -167,6 +167,8 @@ export function TemplateManager() {
   // Resize body_samples so it always has exactly bodyVarCount entries.
   // (We mutate via setForm in an effect so React owns the state.)
   useEffect(() => {
+    // Resize body_samples array to match the current variable count.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm((prev) => {
       if (prev.body_samples.length === bodyVarCount) return prev;
       const next = prev.body_samples.slice(0, bodyVarCount);
@@ -178,9 +180,13 @@ export function TemplateManager() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
+      // No session: stop loading spinner.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
     }
+    // Data fetch when auth resolves; setState happens inside async resolution.
+     
     fetchTemplates(user.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user?.id]);

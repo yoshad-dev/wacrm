@@ -166,10 +166,16 @@ export function ContactDetailView({
 
   useEffect(() => {
     if (open && contactId) {
+      // Data fetches when the sheet opens; setState happens inside async resolution.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchContact();
+       
       fetchTags();
+       
       fetchNotes();
+       
       fetchCustomFields();
+       
       fetchDeals();
     }
   }, [open, contactId, fetchContact, fetchTags, fetchNotes, fetchCustomFields, fetchDeals]);

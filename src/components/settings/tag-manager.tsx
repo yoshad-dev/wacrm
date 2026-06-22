@@ -57,9 +57,13 @@ export function TagManager() {
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
+      // No session: stop loading spinner.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
     }
+    // Data fetch when auth resolves; setState happens inside async resolution.
+     
     fetchTags(user.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, user?.id]);

@@ -164,9 +164,13 @@ export function WhatsAppConfig() {
     // once the profile arrives.
     if (authLoading || profileLoading) return;
     if (!user || !accountId) {
+      // No session/account: stop loading spinner.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
     }
+    // Data fetch when auth/profile resolves; setState happens inside async resolution.
+     
     fetchConfig(accountId);
   }, [authLoading, profileLoading, user, accountId, fetchConfig]);
 

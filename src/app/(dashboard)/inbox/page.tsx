@@ -52,9 +52,13 @@ export default function InboxPage() {
    */
   const [contactPanelOpen, setContactPanelOpen] = useState(true);
   useEffect(() => {
+    // Read persisted sidebar state after mount to avoid SSR hydration mismatch.
     try {
       const stored = localStorage.getItem(CONTACT_PANEL_STORAGE_KEY);
-      if (stored !== null) setContactPanelOpen(stored === "true");
+      if (stored !== null) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setContactPanelOpen(stored === "true");
+      }
     } catch {
       // localStorage can throw in private-browsing / sandboxed contexts.
     }

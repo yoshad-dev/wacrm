@@ -81,6 +81,8 @@ function MediaImage({ url, alt }: { url: string; alt: string }) {
   }, [url]);
 
   useEffect(() => {
+    // Load image on mount / url change; setState happens inside async resolution.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadImage();
     return () => {
       if (src?.startsWith("blob:")) {

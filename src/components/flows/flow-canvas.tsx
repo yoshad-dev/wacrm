@@ -304,6 +304,8 @@ function FlowCanvasInner() {
   const [rfNodes, setRfNodes] = useState<RfNode<NodeData>[]>(derivedRfNodes);
 
   useEffect(() => {
+    // Keep React Flow nodes in sync with derived canvas nodes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRfNodes(derivedRfNodes);
   }, [derivedRfNodes]);
 
