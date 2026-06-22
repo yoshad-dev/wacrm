@@ -66,8 +66,22 @@ export function ContactForm({
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [loadingTags, setLoadingTags] = useState(false);
 
+  const fetchTags = useCallback(async () => {
+    setLoadingTags(true);
+    const { data } = await supabase
+      .from('tags')
+      .select('*')
+      .order('name');
+    if (data) setTags(data);
+    setLoadingTags(false);
+  }, [supabase]);
+
   useEffect(() => {
     if (open) {
+      // Dialog open is the explicit user signal to reset the form to the
+      // current contact. This synchronous reset is intentional and mirrors
+      // what a keyed remount would do.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setName(contact?.name ?? '');
       setPhone(contact?.phone ?? '');
       setEmail(contact?.email ?? '');
@@ -76,7 +90,7 @@ export function ContactForm({
       setDupMatch(null);
       fetchTags();
     }
-  }, [open, contact]);
+  }, [open, contact, contactTags, fetchTags]);
 
   // Look up an existing contact with this number (new contacts only).
   // Runs on blur so we don't query on every keystroke.
@@ -98,16 +112,6 @@ export function ContactForm({
     } finally {
       setCheckingDup(false);
     }
-  }
-
-  async function fetchTags() {
-    setLoadingTags(true);
-    const { data } = await supabase
-      .from('tags')
-      .select('*')
-      .order('name');
-    if (data) setTags(data);
-    setLoadingTags(false);
   }
 
   function toggleTag(tagId: string) {
