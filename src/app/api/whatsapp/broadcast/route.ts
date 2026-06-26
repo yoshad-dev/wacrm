@@ -7,9 +7,9 @@ import { isMessageTemplate } from '@/lib/whatsapp/template-row-guard'
 import {
   sanitizePhoneForMeta,
   isValidE164,
-  phoneVariants,
-  isRecipientNotAllowedError,
 } from '@/lib/whatsapp/phone-utils'
+import { tryPhoneVariants } from '@/lib/whatsapp/try-phone-variants'
+import { resolveAccountId } from '@/lib/auth/resolve-account-id'
 import {
   checkRateLimit,
   rateLimitResponse,
@@ -79,16 +79,7 @@ export async function POST(request: Request) {
       return rateLimitResponse(limit)
     }
 
-    // Resolve the caller's account_id. whatsapp_config + templates
-    // + broadcasts are all account-scoped post-multi-user, so the
-    // old `.eq('user_id', user.id)` filters miss every row created
-    // by a teammate.
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('account_id')
-      .eq('user_id', user.id)
-      .maybeSingle()
-    const accountId = profile?.account_id as string | undefined
+    const accountId = await resolveAccountId(supabase, user.id)
     if (!accountId) {
       return NextResponse.json(
         { error: 'Your profile is not linked to an account.' },
@@ -192,15 +183,12 @@ export async function POST(request: Request) {
         continue
       }
 
-      // Retry with phone variants on "not in allowed list" so numbers
-      // that differ only in a trunk-prefix 0 still reach recipients.
-      const variants = phoneVariants(sanitized)
       let sentMessageId: string | null = null
       let lastError: string | null = null
 
-      for (const variant of variants) {
-        try {
-          const result = await sendTemplateMessage({
+      try {
+        const result = await tryPhoneVariants(sanitized, async (variant) => {
+          const r = await sendTemplateMessage({
             phoneNumberId: config.phone_number_id,
             accessToken,
             to: variant,
@@ -210,19 +198,11 @@ export async function POST(request: Request) {
             messageParams: recipient.messageParams,
             params: recipient.params ?? [],
           })
-          sentMessageId = result.messageId
-          lastError = null
-          break
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error'
-          if (!isRecipientNotAllowedError(errorMessage)) {
-            lastError = errorMessage
-            break
-          }
-          lastError = errorMessage
-          // retry with next variant
-        }
+          return r.messageId
+        })
+        sentMessageId = result.waMessageId
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : 'Unknown error'
       }
 
       if (sentMessageId) {
