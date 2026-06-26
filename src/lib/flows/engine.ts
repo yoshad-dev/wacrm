@@ -193,8 +193,7 @@ async function loadActiveRunForContact(
     .order("started_at", { ascending: false })
     .limit(1);
   if (error) {
-    console.error("[flows] loadActiveRunForContact error:", error.message);
-    return null;
+    throw new Error(`[flows] loadActiveRunForContact failed: ${error.message}`);
   }
   const rows = (data as FlowRunRow[] | null) ?? [];
   return rows[0] ?? null;
@@ -210,8 +209,7 @@ async function loadFlow(
     .eq("id", flowId)
     .maybeSingle();
   if (error) {
-    console.error("[flows] loadFlow error:", error.message);
-    return null;
+    throw new Error(`[flows] loadFlow failed: ${error.message}`);
   }
   return (data as FlowRow | null) ?? null;
 }
@@ -221,9 +219,8 @@ async function loadFlow(
  * `node_key`. The advance loop is then in-memory — a 5-node
  * auto-advancing chain costs one SELECT, not five.
  *
- * Returns an empty map on error so the caller can still dispatch
- * cleanly (every subsequent .get() returns undefined → the run
- * fails with node_not_found, same as the old per-node lookup).
+ * Throws on DB error so the caller can distinguish "flow has no
+ * nodes" from "couldn't reach the database".
  */
 async function loadAllNodes(
   db: AdminClient,
@@ -234,8 +231,7 @@ async function loadAllNodes(
     .select("*")
     .eq("flow_id", flowId);
   if (error) {
-    console.error("[flows] loadAllNodes error:", error.message);
-    return new Map();
+    throw new Error(`[flows] loadAllNodes failed: ${error.message}`);
   }
   const map = new Map<string, FlowNodeRow>();
   for (const row of (data ?? []) as FlowNodeRow[]) {
@@ -291,20 +287,28 @@ async function isDuplicateInbound(
   // Fetch ALL run ids for this contact in this account (active +
   // historical). Bounded by how many flows the customer has been
   // through — small.
-  const { data: runs } = await db
+  const { data: runs, error: runsErr } = await db
     .from("flow_runs")
     .select("id")
     .eq("account_id", accountId)
     .eq("contact_id", contactId);
+  if (runsErr) {
+    console.error("[flows] isDuplicateInbound runs query error:", runsErr.message);
+    return false;
+  }
   if (!runs?.length) return false;
   const runIds = runs.map((r) => (r as { id: string }).id);
 
-  const { count } = await db
+  const { count, error: evtErr } = await db
     .from("flow_run_events")
     .select("id", { count: "exact", head: true })
     .in("flow_run_id", runIds)
     .eq("event_type", "reply_received")
     .filter("payload->>meta_message_id", "eq", metaMessageId);
+  if (evtErr) {
+    console.error("[flows] isDuplicateInbound events query error:", evtErr.message);
+    return false;
+  }
   return (count ?? 0) > 0;
 }
 
@@ -327,7 +331,11 @@ async function findEntryFlow(
     .eq("account_id", accountId)
     .eq("status", "active")
     .order("created_at", { ascending: true });
-  if (error || !flows) return null;
+  if (error) {
+    console.error("[flows] findEntryFlow error:", error.message);
+    return null;
+  }
+  if (!flows) return null;
 
   const typed = flows as FlowRow[];
   for (const flow of typed) {
@@ -877,7 +885,7 @@ export async function dispatchInboundToFlows(
       "[flows] dispatchInboundToFlows threw:",
       err instanceof Error ? err.message : err,
     );
-    return { consumed: false, outcome: "no_match" };
+    return { consumed: false, outcome: "error" };
   }
 }
 
@@ -946,7 +954,9 @@ async function handleReplyForActiveRun(
           reprompt_count: 0,
         })
         .eq("id", run.id);
-      if (!capErr) {
+      if (capErr) {
+        console.error("[flows] collect_input capture failed:", capErr.message);
+      } else {
         // Mirror the UPDATE in-memory so downstream interpolation in
         // the advance loop sees the captured var without us having to
         // re-SELECT the whole row.

@@ -24,12 +24,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'trigger_type required' }, { status: 400 })
   }
 
-  await runAutomationsForTrigger({
-    accountId,
-    triggerType: body.trigger_type as AutomationTriggerType,
-    contactId: body.contact_id ?? null,
-    context: body.context ?? {},
-  })
+  try {
+    await runAutomationsForTrigger({
+      accountId,
+      triggerType: body.trigger_type as AutomationTriggerType,
+      contactId: body.contact_id ?? null,
+      context: body.context ?? {},
+    })
+  } catch (err) {
+    console.error(
+      '[automations-engine] runAutomationsForTrigger failed:',
+      err instanceof Error ? err.message : err,
+    )
+    return NextResponse.json({ error: 'automation execution failed' }, { status: 500 })
+  }
 
   return NextResponse.json({ ok: true })
 }

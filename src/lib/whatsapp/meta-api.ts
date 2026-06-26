@@ -619,7 +619,10 @@ export async function editMessageTemplate(
   if (!response.ok) {
     await throwMetaError(response, `Meta API error: ${response.status}`)
   }
-  const data = await response.json().catch(() => ({}))
+  const data = await response.json().catch((parseErr: unknown) => {
+    console.error('[meta-api] updateMessageTemplate: response OK but JSON parse failed:', parseErr)
+    return {}
+  })
   return { success: data?.success !== false }
 }
 

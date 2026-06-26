@@ -96,7 +96,7 @@ export async function GET(request: Request) {
       .select('id')
 
     if (Array.isArray(updated) && updated.length > 0) {
-      await admin.from('flow_run_events').insert({
+      const { error: evtErr } = await admin.from('flow_run_events').insert({
         flow_run_id: r.id,
         event_type: 'timeout',
         payload: {
@@ -104,6 +104,9 @@ export async function GET(request: Request) {
           policy_hours: policy.on_timeout_hours,
         },
       })
+      if (evtErr) {
+        console.error(`[flows-cron] flow_run_events insert failed for run ${r.id}:`, evtErr.message)
+      }
       swept += 1
     }
   }

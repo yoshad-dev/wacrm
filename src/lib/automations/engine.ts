@@ -719,11 +719,14 @@ async function appendResults(
 ) {
   if (!logId) return
   const db = supabaseAdmin()
-  const { data: existing } = await db
+  const { data: existing, error: fetchErr } = await db
     .from('automation_logs')
     .select('steps_executed, status')
     .eq('id', logId)
     .single()
+  if (fetchErr) {
+    console.error('[automations] appendResults fetch failed:', fetchErr.message)
+  }
   const merged = [
     ...((existing?.steps_executed as AutomationLogStepResult[] | undefined) ?? []),
     ...newItems,
@@ -734,7 +737,10 @@ async function appendResults(
     update.status = status
   }
   if (errorMessage) update.error_message = errorMessage
-  await db.from('automation_logs').update(update).eq('id', logId)
+  const { error: updateErr } = await db.from('automation_logs').update(update).eq('id', logId)
+  if (updateErr) {
+    console.error('[automations] appendResults update failed:', updateErr.message)
+  }
 }
 
 async function finalizeLog(
@@ -743,15 +749,21 @@ async function finalizeLog(
   errorMessage: string | null,
 ) {
   if (!logId) return
-  await supabaseAdmin()
+  const { error } = await supabaseAdmin()
     .from('automation_logs')
     .update({ status, error_message: errorMessage })
     .eq('id', logId)
+  if (error) {
+    console.error('[automations] finalizeLog failed:', error.message)
+  }
 }
 
 async function markPending(id: string, status: 'done' | 'failed') {
-  await supabaseAdmin()
+  const { error } = await supabaseAdmin()
     .from('automation_pending_executions')
     .update({ status })
     .eq('id', id)
+  if (error) {
+    console.error('[automations] markPending failed:', error.message)
+  }
 }
