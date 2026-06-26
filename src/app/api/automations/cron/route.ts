@@ -47,21 +47,28 @@ export async function GET(request: Request) {
       .maybeSingle()
     if (!claim) continue
 
-    await resumePendingExecution({
-      id: row.id as string,
-      automation_id: row.automation_id as string,
-      // account_id is NOT NULL on automation_pending_executions
-      // post-017; the engine uses it for tenant-scoped lookups.
-      account_id: row.account_id as string,
-      user_id: row.user_id as string,
-      contact_id: (row.contact_id as string | null) ?? null,
-      log_id: (row.log_id as string | null) ?? null,
-      parent_step_id: (row.parent_step_id as string | null) ?? null,
-      branch: (row.branch as 'yes' | 'no' | null) ?? null,
-      next_step_position: row.next_step_position as number,
-      context: (row.context as AutomationContext) ?? {},
-    })
-    processed++
+    try {
+      await resumePendingExecution({
+        id: row.id as string,
+        automation_id: row.automation_id as string,
+        // account_id is NOT NULL on automation_pending_executions
+        // post-017; the engine uses it for tenant-scoped lookups.
+        account_id: row.account_id as string,
+        user_id: row.user_id as string,
+        contact_id: (row.contact_id as string | null) ?? null,
+        log_id: (row.log_id as string | null) ?? null,
+        parent_step_id: (row.parent_step_id as string | null) ?? null,
+        branch: (row.branch as 'yes' | 'no' | null) ?? null,
+        next_step_position: row.next_step_position as number,
+        context: (row.context as AutomationContext) ?? {},
+      })
+      processed++
+    } catch (err) {
+      console.error(
+        `[automations-cron] resumePendingExecution failed for ${row.id}:`,
+        err instanceof Error ? err.message : err,
+      )
+    }
   }
 
   return NextResponse.json({ processed })
