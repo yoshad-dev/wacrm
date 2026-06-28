@@ -90,12 +90,14 @@ export async function GET() {
     phone_metadata_ok: boolean
     waba_subscribed_to_app: boolean | null
     locally_marked_registered: boolean
+    registration_skipped: boolean
   } = {
     config_exists: true,
     token_decryptable: true,
     phone_metadata_ok: false,
     waba_subscribed_to_app: null,
     locally_marked_registered: config.registered_at != null,
+    registration_skipped: config.registration_skipped ?? false,
   }
   const errors: string[] = []
 
@@ -143,7 +145,7 @@ export async function GET() {
   const live =
     checks.phone_metadata_ok &&
     (checks.waba_subscribed_to_app ?? false) &&
-    checks.locally_marked_registered
+    (checks.locally_marked_registered || checks.registration_skipped)
 
   return NextResponse.json({
     live,
@@ -152,5 +154,6 @@ export async function GET() {
     last_registration_error: config.last_registration_error ?? null,
     registered_at: config.registered_at ?? null,
     subscribed_apps_at: config.subscribed_apps_at ?? null,
+    registration_skipped: config.registration_skipped ?? false,
   })
 }

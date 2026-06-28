@@ -167,7 +167,16 @@ export async function POST(request: Request) {
   const rawBody = await request.text()
   const signature = request.headers.get('x-hub-signature-256')
 
-  if (!verifyMetaWebhookSignature(rawBody, signature)) {
+  console.log('[webhook] received POST', {
+    bodyLength: rawBody.length,
+    hasSignature: !!signature,
+    url: request.url,
+  })
+
+  const signatureValid = verifyMetaWebhookSignature(rawBody, signature)
+  console.log('[webhook] signature valid:', signatureValid)
+
+  if (!signatureValid) {
     // 401 (not 200) — we want Meta's delivery dashboard to show failures
     // loudly if a misconfiguration causes signatures to stop matching,
     // rather than silently eating events.
@@ -191,9 +200,15 @@ export async function POST(request: Request) {
 }
 
 async function processWebhook(body: { entry?: WhatsAppWebhookEntry[] }) {
-  if (!body.entry) return
+  if (!body.entry) {
+    console.log('[webhook] processWebhook: no body.entry')
+    return
+  }
+
+  console.log('[webhook] processWebhook: entries=', body.entry.length)
 
   for (const entry of body.entry) {
+    console.log('[webhook] processWebhook: entry.changes=', entry.changes?.length)
     for (const change of entry.changes) {
       // Template-lifecycle events (status / quality / components
       // updates from Meta) come in on a different change.field and
@@ -221,6 +236,7 @@ async function processWebhook(body: { entry?: WhatsAppWebhookEntry[] }) {
       if (!value.messages || !value.contacts) continue
 
       const phoneNumberId = value.metadata.phone_number_id
+      console.log('[webhook] processing messages for phone_number_id:', phoneNumberId)
 
       // Find user's config by phone_number_id. `.single()` returns
       // PGRST116 for both 0 rows AND ≥2 rows — distinguish them so
@@ -240,6 +256,8 @@ async function processWebhook(body: { entry?: WhatsAppWebhookEntry[] }) {
         )
         continue
       }
+
+      console.log('[webhook] configs found for phone_number_id:', phoneNumberId, 'count=', configRows?.length ?? 0)
 
       if (!configRows || configRows.length === 0) {
         console.error('No config found for phone_number_id:', phoneNumberId)
@@ -595,6 +613,13 @@ async function processMessage(
     .eq('sender_type', 'customer')
   const isFirstInboundMessage = (priorCustomerMsgCount ?? 0) === 0
 
+  console.log('[webhook] inserting inbound message:', {
+    conversationId: conversation.id,
+    contentType,
+    contentText: contentText?.slice(0, 50),
+    messageId: message.id,
+  })
+
   const { error: msgError } = await supabaseAdmin().from('messages').insert({
     conversation_id: conversation.id,
     sender_type: 'customer',
@@ -615,6 +640,8 @@ async function processMessage(
     console.error('Error inserting message:', msgError)
     return
   }
+
+  console.log('[webhook] inbound message inserted successfully:', message.id)
 
   // Update conversation
   const { error: convError } = await supabaseAdmin()

@@ -66,6 +66,7 @@ export function WhatsAppConfig() {
   // Meta will silently drop every inbound event — that's the
   // multi-number bug that prompted this work.
   const isRegistered = Boolean(config?.registered_at);
+  const registrationSkipped = Boolean(config?.registration_skipped);
   const lastRegistrationError = config?.last_registration_error ?? null;
 
   const [verifyingRegistration, setVerifyingRegistration] = useState(false);
@@ -76,6 +77,7 @@ export function WhatsAppConfig() {
     last_registration_error?: string | null;
     registered_at?: string | null;
     subscribed_apps_at?: string | null;
+    registration_skipped?: boolean;
   };
   const [registrationProbe, setRegistrationProbe] =
     useState<RegistrationProbe | null>(null);
@@ -449,24 +451,38 @@ export function WhatsAppConfig() {
             className={
               isRegistered
                 ? 'bg-emerald-950/30 border-emerald-700/50'
-                : 'bg-amber-950/30 border-amber-700/50'
+                : registrationSkipped
+                  ? 'bg-blue-950/30 border-blue-700/50'
+                  : 'bg-amber-950/30 border-amber-700/50'
             }
           >
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2">
-                {isRegistered ? (
-                  <CheckCircle2 className="size-4 text-emerald-400" />
+                {isRegistered || registrationSkipped ? (
+                  <CheckCircle2
+                    className={
+                      'size-4 ' +
+                      (isRegistered ? 'text-emerald-400' : 'text-blue-400')
+                    }
+                  />
                 ) : (
                   <AlertTriangle className="size-4 text-amber-400" />
                 )}
                 <AlertTitle
                   className={
-                    'mb-0 ' + (isRegistered ? 'text-emerald-200' : 'text-amber-200')
+                    'mb-0 ' +
+                    (isRegistered
+                      ? 'text-emerald-200'
+                      : registrationSkipped
+                        ? 'text-blue-200'
+                        : 'text-amber-200')
                   }
                 >
                   {isRegistered
                     ? 'Registered — Meta will deliver events to wacrm'
-                    : 'Not registered — Meta will not deliver events'}
+                    : registrationSkipped
+                      ? 'Registration skipped — Meta test number, pre-registered'
+                      : 'Not registered — Meta will not deliver events'}
                 </AlertTitle>
               </div>
               <Button
@@ -493,6 +509,13 @@ export function WhatsAppConfig() {
                     : 'unknown'}
                   . Click <strong>Verify with Meta</strong> if events
                   stop arriving.
+                </>
+              ) : registrationSkipped ? (
+                <>
+                  No PIN was supplied when this config was saved, so
+                  wacrm skipped the <code>/register</code> step. Meta
+                  test numbers are pre-registered, so events should
+                  still be delivered if the checks below pass.
                 </>
               ) : lastRegistrationError ? (
                 <>

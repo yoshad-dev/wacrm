@@ -48,7 +48,18 @@ export function PresenceHeartbeat() {
       return "online";
     };
 
-    const beat = async () => {
+    const isRetryableError = (err: unknown): boolean => {
+      if (!err || typeof err !== "object") return false;
+      const msg = ((err as { message?: string }).message ?? "").toLowerCase();
+      return (
+        msg.includes("failed to fetch") ||
+        msg.includes("network") ||
+        msg.includes("timeout") ||
+        msg.includes("abort")
+      );
+    };
+
+    const beat = async (attempt = 0): Promise<void> => {
       if (cancelled) return;
       // Coalesce bursts: a tab refocus fires visibilitychange AND focus
       // together, so skip a beat within 1s of the last to avoid two RPCs
@@ -60,6 +71,11 @@ export function PresenceHeartbeat() {
         p_status: currentStatus(),
       });
       if (error && !cancelled) {
+        if (attempt < 2 && isRetryableError(error)) {
+          const delay = 1_000 * 2 ** attempt;
+          setTimeout(() => void beat(attempt + 1), delay);
+          return;
+        }
         // Non-fatal: presence is best-effort. Log once per failure so a
         // misconfigured RPC is visible without spamming.
         console.error("[PresenceHeartbeat] touch_presence failed:", error.message);
