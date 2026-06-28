@@ -358,7 +358,8 @@ export interface DispatchInboundResult {
     | "handed_off"
     | "fallback_fired"
     | "duplicate_inbound_ignored"
-    | "no_match";
+    | "no_match"
+    | "error";
 }
 
 // ============================================================
