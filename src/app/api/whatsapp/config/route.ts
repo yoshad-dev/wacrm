@@ -274,7 +274,7 @@ export async function POST(request: Request) {
     // /register when the user didn't provide a PIN this time around.
     const { data: existing } = await supabase
       .from('whatsapp_config')
-      .select('id, registered_at, phone_number_id')
+      .select('id, registered_at, phone_number_id, registration_skipped')
       .eq('account_id', accountId)
       .maybeSingle()
 
@@ -295,6 +295,9 @@ export async function POST(request: Request) {
     // was supplied (see below). Distinct from registrationError — this
     // is not a failure, just an incomplete-but-valid save.
     let registrationSkipped = false
+    // Set when /register actually succeeds this save, so we know to
+    // clear any previously persisted registration_skipped flag.
+    let registerSucceeded = false
 
     const needsRegistration = !sameNumber || (typeof pin === 'string' && pin.length > 0)
     if (needsRegistration) {
@@ -317,6 +320,7 @@ export async function POST(request: Request) {
             pin,
           })
           registeredAt = new Date().toISOString()
+          registerSucceeded = true
         } catch (err) {
           registrationError =
             err instanceof Error ? err.message : 'Unknown Meta API error'
@@ -327,6 +331,20 @@ export async function POST(request: Request) {
           // not actually live yet.
         }
       }
+    }
+
+    // Persist the skipped flag only when it changed meaningfully:
+    //   * /register succeeded       → false
+    //   * /register skipped         → true
+    //   * /register failed          → preserve existing value
+    //   * no registration needed    → preserve existing value
+    let registrationSkippedToPersist: boolean
+    if (registerSucceeded) {
+      registrationSkippedToPersist = false
+    } else if (registrationSkipped) {
+      registrationSkippedToPersist = true
+    } else {
+      registrationSkippedToPersist = existing?.registration_skipped ?? false
     }
 
     // Step 2: subscribe the WABA to this app. Idempotent on Meta's
@@ -363,6 +381,7 @@ export async function POST(request: Request) {
       registered_at: registrationError ? null : registeredAt,
       subscribed_apps_at: subscribedAppsAt ?? null,
       last_registration_error: registrationError,
+      registration_skipped: registrationSkippedToPersist,
       updated_at: new Date().toISOString(),
     }
 

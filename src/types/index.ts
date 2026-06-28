@@ -285,6 +285,12 @@ export interface WhatsAppConfig {
   subscribed_apps_at?: string;
   /** Last error from /register; cleared on success. */
   last_registration_error?: string;
+  /**
+   * TRUE when /register was deliberately skipped because no PIN was
+   * supplied (e.g. a pre-registered Meta test number). Lets the UI
+   * distinguish "skipped" from "not registered".
+   */
+  registration_skipped?: boolean;
 }
 
 // Raw Meta status enum. We persist this verbatim from Meta (sync + webhook)
