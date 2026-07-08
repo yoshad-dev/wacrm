@@ -49,3 +49,6 @@ next-env.d.ts
 /supabase/.env
 /supabase/config.toml
 /supabase/.gitignore
+
+# scripts
+/scripts/
